@@ -745,16 +745,29 @@ class BDSIMSequence(PlacementSequence):
             path:
         """
         bdsim_input = load_bdsim_input_file(filename, path).loc[from_element:to_element]
+        bdsim_input.query("TYPE != 'ecol' and TYPE != 'rcol' and TYPE != 'dump'", inplace=True) ## TMP
+
         sequence_metadata = SequenceMetadata()
-        data = bdsim_input.apply(lambda _: bdsim_element_factory(_, sequence_metadata), axis=1).to_list()
+        data = []
+
+        #data = bdsim_input.apply(lambda _: bdsim_element_factory(_), axis=1) ## TO CHANGE but apply gives a KeyError
+        for _, line in bdsim_input.iterrows():
+            data.append(bdsim_element_factory(line))
+
+
 
         super().__init__(name="BDSIM",
-                         data=data,
+                         data=[d for d in data if d is not None],
                          metadata=sequence_metadata,
                          )
 
-    def to_df(self) -> _pd.DataFrame:
-        """TODO"""
-        return self._data
+    def to_df(self):
+        dicts = list(map(dict, self._data))
+        counters = {}
+        for d in dicts:
+            if d['NAME'] is None:
+                counters[d['KEYWORD']] = counters.get(d['KEYWORD'], 0) + 1
+                d['NAME'] = f"{d['KEYWORD']}_{counters[d['KEYWORD']]}"
+        return _pd.DataFrame(dicts).set_index('NAME')
 
     df = property(to_df)

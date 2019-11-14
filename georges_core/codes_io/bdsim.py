@@ -10,19 +10,13 @@ import georges.bdsim
 from ..kinematics import Kinematics as _Kinematics
 
 
-BDSIM_TYPE_CODES_ORIGINAL: Dict[str, Tuple[Callable[[Any], Any], Callable[[Any, Any], Any]]] = {
-    "drift": (lambda _: Element.Drift(name= _.name, L=float(_["LENGTH"]) * _ureg.m),
-        lambda _, __: None),
-    'quadrupole': (lambda _: Element.Quadrupole(name= _.name, L=float(_["LENGTH"]) * _ureg.m, K1=_["K1"] * _ureg.m**-2),
-         lambda _, __: None),
-    "rcol": (lambda _: Element.Collimator(name= _.name),
-        lambda _, __: None),
-    "ecol": (lambda _: Element.Collimator(name= _.name),
-        lambda _, __: None),
-    "dump": (lambda _: Element.Collimator(name= _.name),
-        lambda _, __: None),
-#     "sbend": (lambda _: Element.SBend(B=float(_[2]) * _ureg.tesla, L=float(_[1]) * _ureg.m, N=float(_[3])),
-#         lambda _, __: None),
+BDSIM_TYPE_CODES_ORIGINAL = {
+    "drift": (lambda _: Element.Drift(name=_.name, L=float(_["LENGTH"]) * _ureg.m)),
+    'quadrupole': (lambda _: Element.Quadrupole(name=_.name, L=float(_["LENGTH"]) * _ureg.m, K1=_["K1"] * _ureg.m**-2)),
+    "rcol": (lambda _: Element.RectangularCollimator(name=_.name)),
+    "ecol": (lambda _: Element.RectangularCollimator(name=_.name)),
+    "dump": (lambda _: Element.RectangularCollimator(name=_.name)),
+    # "sbend": (lambda _: Element.SBend(B=float(_[2]) * _ureg.tesla, L=float(_[1]) * _ureg.m, N=float(_[3]))),
 }
 
 
@@ -54,6 +48,6 @@ def load_bdsim_input_file(filename: str, path: str = '.',
     return _
 
 
-def bdsim_element_factory(element: _pd.Series, sequence_metadata):
+def bdsim_element_factory(element: _pd.Series):
         _ = BDSIM_TYPE_CODES_ORIGINAL[element["TYPE"]]
-        return _[0](element), _[1](element,sequence_metadata)
+        return _(element)
