@@ -13,6 +13,7 @@ from .elements import Element as _Element
 from .elements import ElementClass as _ElementClass
 from .betablock import BetaBlock as _BetaBlock
 from ..codes_io import load_madx_twiss_headers, load_madx_twiss_table, load_transport_input_file, transport_element_factory
+from ..codes_io import load_bdsim_input_file, bdsim_element_factory
 from .. import ureg as _ureg
 if TYPE_CHECKING:
     from ..particles import ParticuleType as _ParticuleType
@@ -259,6 +260,19 @@ class Sequence(metaclass=SequenceType):
 
         """
         return SurveySequence()
+
+    @staticmethod
+    def from_bdsim(filename: str = 'output.root',
+                   path: str = '.',
+                   ):
+        """
+        TODO
+
+        Returns:
+
+        """
+        return BDSIMSequence(filename=filename,
+                             path=path)
 
 
 class PlacementSequence(Sequence):
@@ -706,5 +720,41 @@ class SurveySequence(PlacementSequence):
                 counters[d['KEYWORD']] = counters.get(d['KEYWORD'], 0) + 1
                 d['NAME'] = f"{d['KEYWORD']}_{counters[d['KEYWORD']]}"
         return _pd.DataFrame(dicts).set_index('NAME')
+
+    df = property(to_df)
+
+
+class BDSIMSequence(PlacementSequence):
+    """
+    TODO
+    """
+
+    def __init__(self,
+                 filename: str = 'output.root',
+                 path: str = '.',
+                 *,
+                 columns: List = None,
+                 from_element: str = None,
+                 to_element: str = None,
+                 element_keys: Optional[Mapping[str, str]] = None,
+                 ):
+        """
+
+        Args:
+            filename: the name of the physics
+            path:
+        """
+        bdsim_input = load_bdsim_input_file(filename, path).loc[from_element:to_element]
+        sequence_metadata = SequenceMetadata()
+        data = bdsim_input.apply(lambda _: bdsim_element_factory(_, sequence_metadata), axis=1).to_list()
+
+        super().__init__(name="BDSIM",
+                         data=data,
+                         metadata=sequence_metadata,
+                         )
+
+    def to_df(self) -> _pd.DataFrame:
+        """TODO"""
+        return self._data
 
     df = property(to_df)
