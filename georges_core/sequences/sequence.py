@@ -272,7 +272,10 @@ class Sequence(metaclass=SequenceType):
 
         """
         return BDSIMSequence(filename=filename,
-                             path=path)
+                             path=path,
+                             from_element=None,
+                             to_element=None
+                             )
 
 
 class PlacementSequence(Sequence):
@@ -733,10 +736,8 @@ class BDSIMSequence(PlacementSequence):
                  filename: str = 'output.root',
                  path: str = '.',
                  *,
-                 columns: List = None,
                  from_element: str = None,
                  to_element: str = None,
-                 element_keys: Optional[Mapping[str, str]] = None,
                  ):
         """
 
@@ -745,16 +746,14 @@ class BDSIMSequence(PlacementSequence):
             path:
         """
         bdsim_input = load_bdsim_input_file(filename, path).loc[from_element:to_element]
-        bdsim_input.query("TYPE != 'ecol' and TYPE != 'rcol' and TYPE != 'dump'", inplace=True) ## TMP
+        bdsim_input.query("TYPE != 'ecol' and TYPE != 'rcol' and TYPE != 'dump'", inplace=True)  # TMP
 
         sequence_metadata = SequenceMetadata()
         data = []
 
-        #data = bdsim_input.apply(lambda _: bdsim_element_factory(_), axis=1) ## TO CHANGE but apply gives a KeyError
+        # data = bdsim_input.apply(lambda _: bdsim_element_factory(_), axis=1) ## TO CHANGE but apply gives a KeyError
         for _, line in bdsim_input.iterrows():
             data.append(bdsim_element_factory(line))
-
-
 
         super().__init__(name="BDSIM",
                          data=[d for d in data if d is not None],
