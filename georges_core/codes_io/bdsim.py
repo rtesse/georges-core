@@ -55,6 +55,7 @@ def load_bdsim_model(filename: str, path: str = '.', with_units: bool = True) ->
         _['K2'] = _['K2'].apply(lambda e: e * _ureg.m ** -3)
         _['E1'] = _['E1'].apply(lambda e: e * _ureg.radian)
         _['E2'] = _['E1'].apply(lambda e: e * _ureg.radian)
+        _['HGAP'] = _['HGAP'].apply(lambda e: e * _ureg.meter)
         _['TILT'] = _['TILT'].apply(lambda e: e * _ureg.radian)
         _['B'] = _['B'].apply(lambda e: e * _ureg.T)
 
