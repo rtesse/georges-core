@@ -55,7 +55,7 @@ TRANSPORT_TYPE_CODES_IBA: Dict[int, Tuple[Callable[[Any], Any], Callable[[Any, A
         lambda _, __: None),
     6: (lambda _: georges_core.sequences.Element.Collimator(),
         lambda _, __: None),
-    7: (lambda _: georges_core.sequences.Element.Steerer(),
+    7: (lambda _: georges_core.sequences.Element.Kicker(),
         lambda _, __: None),
     10: (lambda _: None,
          lambda _, __: None),
