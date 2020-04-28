@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Optional, Any, List, Tuple, Mapping, Union
 from dataclasses import dataclass
 import numpy as _np
 import pandas as _pd
+import os
 from .. import particles as _particles
 from ..particles import Proton as _Proton
 from ..kinematics import Kinematics as _Kinematics
@@ -13,7 +14,7 @@ from .elements import Element as _Element
 from .elements import ElementClass as _ElementClass
 from .betablock import BetaBlock as _BetaBlock
 from ..codes_io import load_madx_twiss_headers, load_madx_twiss_table, load_transport_input_file, \
-    transport_element_factory
+    transport_element_factory, csv_element_factory
 from ..codes_io import BDSimOutput
 from .. import ureg as _ureg
 
@@ -700,10 +701,11 @@ class TransportSequence(Sequence):
     df = property(to_df)
 
 
-class SurveySequence(PlacementSequence):
+class SurveySequence(Sequence):
     def __init__(self,
                  filename: str,
                  path: str = '.',
+                 metadata: Optional[SequenceMetadata] = None,
                  ):
         """
 
@@ -711,34 +713,34 @@ class SurveySequence(PlacementSequence):
             filename: the name of the physics
             path:
         """
-        transport_input = load_transport_input_file(filename, path)
+        sequence = _pd.read_csv(os.path.join(path, filename), index_col='NAME', sep=',')
+
+        sequence['LENGTH'] = sequence['LENGTH'].fillna(0)
+        sequence['AT_CENTER'] = sequence['AT_CENTER'].apply(lambda e: e * _ureg.meter)
+        sequence['LENGTH'] = sequence['LENGTH'].apply(lambda e: e * _ureg.meter)
+        sequence["AT_ENTRY"] = sequence["AT_CENTER"] - 0.5 * sequence["LENGTH"]
+        sequence["AT_EXIT"] = sequence["AT_CENTER"] + 0.5 * sequence["LENGTH"]
+
+        sequence["ANGLE"] = sequence["ANGLE"].apply(lambda e: e * _ureg.radian)
+        sequence["E1"] = sequence["E1"].apply(lambda e: e * _ureg.radian)
+        sequence["E2"] = sequence["E2"].apply(lambda e: e * _ureg.radian)
+
+        sequence['APERTURE'] = sequence['APERTURE'].fillna('1')
+        sequence['APERTYPE'] = sequence['APERTYPE'].fillna("CIRCULAR")
+        sequence['APERTURE'] = sequence['APERTURE'].apply(lambda e: _np.array(e.split(',')).astype(float) * _ureg.m)
 
         data = []
         sequence_metadata = SequenceMetadata()
-        for line in transport_input:
-            if len(line.strip()) == 0:
-                continue
-            d = line.split()
-            if d[0].startswith('-'):
-                continue
-            data.append(transport_element_factory(d, sequence_metadata)[0])
+        for element in sequence.iterrows():
+            data.append(csv_element_factory(element))
 
-        if sequence_metadata.kinematics is None:
-            raise SequenceException("Invalid kinematics - Beam not found in input")
-
-        super().__init__(name='TRANSPORT',
-                         data=[d for d in data if d is not None],
-                         metadata=sequence_metadata,
-                         )
+        super().__init__(name='SURVEY',
+                         data=data,
+                         metadata=sequence_metadata)
 
     def to_df(self):
-        dicts = list(map(dict, self._data))
-        counters = {}
-        for d in dicts:
-            if d['NAME'] is None:
-                counters[d['KEYWORD']] = counters.get(d['KEYWORD'], 0) + 1
-                d['NAME'] = f"{d['KEYWORD']}_{counters[d['KEYWORD']]}"
-        return _pd.DataFrame(dicts).set_index('NAME')
+        # TODO
+        pass
 
     df = property(to_df)
 

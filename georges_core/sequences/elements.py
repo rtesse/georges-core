@@ -121,3 +121,6 @@ Element.make_subclass('VKicker',
                       TILT=0.0 * _ureg.radian)
 Element.make_subclass('Cavity')
 Element.make_subclass('Steerer')
+Element.make_subclass('Collimator',
+                      Aperture=1 * _ureg.m,
+                      Apertype="CIRCULAR")
