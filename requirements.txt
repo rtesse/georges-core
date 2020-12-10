@@ -8,4 +8,5 @@ pint
 plotly
 pytest
 uproot
+uproot_methods
 vtk
