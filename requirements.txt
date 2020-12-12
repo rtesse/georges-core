@@ -7,6 +7,7 @@ pandas
 pint
 plotly
 pytest
+scipy
 uproot
 uproot_methods
 vtk
